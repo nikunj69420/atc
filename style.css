@@ -32,3 +32,15 @@ canvas{cursor:grab;touch-action:none}canvas.panning{cursor:grabbing}
 .weather-key{border-top:1px solid #3b535844;margin:2px 12px 0;padding:10px 0;font:8px 'IBM Plex Mono',monospace;color:#d4af80}.weather-key small{display:block;font-size:8px;color:var(--muted);margin-top:6px}.weather-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#d39564;margin-right:6px}
 #alert{top:auto;bottom:104px;max-width:min(480px,85%);max-height:90px;overflow:auto;line-height:1.6;font-size:9px;z-index:2}#guide{max-height:90%;overflow:auto}
 @media(max-width:650px){#sequence-panel{right:12px;top:112px;width:210px}#sequence-panel summary{font-size:8px}#sequence-list{max-height:120px}.sequence-row{font-size:9px}.sequence-row small{font-size:7px}.weather-key{font-size:7px}.weather-key small{font-size:7px}}
+
+#procedure-chart{position:absolute;z-index:3;top:92px;left:24px;width:274px;max-height:calc(100% - 155px);overflow:auto;padding:16px;border:1px solid #57776d88;border-radius:14px;background:#16272ff5;box-shadow:0 12px 40px #0005}
+.procedure-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}.procedure-heading h3{margin:0;color:#bbd9cf;font-size:10px}.procedure-heading button{padding:3px 8px;font-size:17px;border:0}
+.procedure-disclaimer{font:7px 'IBM Plex Mono',monospace;color:var(--yellow);letter-spacing:.5px;margin:8px 0 18px}
+#procedure-chart>label{display:block;font:8px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:10px}#procedure-chart select{font-size:10px;padding:9px}
+#procedure-legs{padding-left:23px;margin:12px 0;font:9px/2 'IBM Plex Mono',monospace;color:#c2d4ce}.leg-skipped{opacity:.35;text-decoration:line-through}
+#procedure-chart .via-option{display:flex;align-items:center;gap:7px;line-height:1.6;font-size:9px}.via-option input{accent-color:var(--green);flex-shrink:0}
+#procedure-target{font:9px/1.6 'IBM Plex Mono',monospace;color:var(--yellow);padding-top:9px}#procedure-assign,#procedure-cancel{width:100%;font-size:9px;padding:11px;margin-top:7px}
+.procedure-note{font:9px/1.6 Inter,Arial,sans-serif;color:var(--muted);margin-bottom:0}button:disabled{opacity:.4;cursor:default;box-shadow:none}
+#menu{max-height:calc(100% - 16px);overflow:auto}
+@media(max-width:1200px){.header-stat{display:none}.live{margin-left:auto}}
+@media(max-width:650px){header{height:98px;flex-wrap:wrap;padding:12px;gap:7px;align-content:center}.sector-title{flex-basis:100%}.sector-title small{display:none}header button{flex:1;white-space:nowrap;padding:8px 5px;font-size:8px}.workspace{height:calc(100dvh - 130px)}#procedure-chart{left:12px;top:75px;width:250px;max-height:calc(100% - 95px)}#sequence-panel{top:112px}#procedure-chart:not([hidden])~#sequence-panel{display:none}}
