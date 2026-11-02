@@ -23,3 +23,12 @@ header button{background:#1b2c3470;border-color:#354a5066}
 .zoom-controls button{border-radius:0;border-right-color:#3b535866}
 canvas{cursor:grab;touch-action:none}canvas.panning{cursor:grabbing}
 @media(prefers-reduced-motion:reduce){button,select{transition:none}}
+
+#sequence-panel{position:absolute;right:24px;top:92px;width:256px;z-index:1;border:1px solid #3b535877;border-radius:12px;background:#14232beF;box-shadow:0 6px 24px #0003;overflow:hidden}
+#sequence-panel summary{cursor:pointer;padding:13px 12px;font:9px 'IBM Plex Mono',monospace;color:#b0c7c3;letter-spacing:.4px;user-select:none}
+#sequence-count{float:right;color:var(--yellow)}.sequence-caption{padding:0 12px 8px;color:var(--muted);font:8px 'IBM Plex Mono',monospace}
+#sequence-list{max-height:180px;overflow:auto;padding:0 6px}.sequence-row{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid #3b535844;padding:10px 6px;border-radius:6px;color:var(--yellow);font-size:10px}
+.sequence-row small{display:block;color:var(--muted);font-size:8px;margin-top:5px}.sequence-time{text-align:right;color:#b3d3c1}.sequence-row.tight .sequence-time,.sequence-row.tight .sequence-time small{color:#ff9488}.sequence-empty{margin:4px 6px 14px;font-size:10px;color:var(--muted)}
+.weather-key{border-top:1px solid #3b535844;margin:2px 12px 0;padding:10px 0;font:8px 'IBM Plex Mono',monospace;color:#d4af80}.weather-key small{display:block;font-size:8px;color:var(--muted);margin-top:6px}.weather-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#d39564;margin-right:6px}
+#alert{top:auto;bottom:104px;max-width:min(480px,85%);max-height:90px;overflow:auto;line-height:1.6;font-size:9px;z-index:2}#guide{max-height:90%;overflow:auto}
+@media(max-width:650px){#sequence-panel{right:12px;top:112px;width:210px}#sequence-panel summary{font-size:8px}#sequence-list{max-height:120px}.sequence-row{font-size:9px}.sequence-row small{font-size:7px}.weather-key{font-size:7px}.weather-key small{font-size:7px}}

@@ -4,6 +4,7 @@ const DEFAULT_ZOOM=1.25;
 let sim,level='easy',selected=null,plot=null,points=[],hover=null,paused=false,rate=1,last=0,w=0,h=0,scale=1,cx=0,cy=0,uiTimer=0,zoom=DEFAULT_ZOOM,baseScale=1,panX=0,panY=0;
 const colors={arrival:'#e9c76a',departure:'#6dbbef',transferred:'#74b59c'};
 let drag=null,suppressClick=false;
+let finalSequence=[],labelBoxes=new Map();
 function screen(p){return {x:cx+p.x*scale,y:cy-p.y*scale};}function world(p){return{x:(p.x-cx)/scale,y:(cy-p.y)/scale};}
 function resize(){const r=canvas.getBoundingClientRect();w=r.width;h=r.height;const d=devicePixelRatio||1;canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0);baseScale=Math.min(w/91,h/86);applyView();}
 function applyView(){scale=baseScale*zoom;cx=w*.47+panX;cy=h*.52+panY;$('zoom-reset').textContent=Math.round(zoom*100)+'%';$('map-scale').textContent='SCROLL TO ZOOM · RANGE '+Math.round(80/zoom)+' NM';}
@@ -22,7 +23,9 @@ $('help').onclick=()=>{$('guide').hidden=false;};$('close-guide').onclick=()=>{$
 window.addEventListener('resize',resize);
 function path(coords,stroke,fill){ctx.beginPath();coords.forEach((p,i)=>{const q=screen({x:p[0],y:p[1]});i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);});if(fill){ctx.closePath();ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}}
 function text(t,x,y,color='#607b80',size=9){ctx.fillStyle=color;ctx.font=size+'px "IBM Plex Mono",monospace';ctx.fillText(t,x,y);}
-function draw(){ctx.clearRect(0,0,w,h);ctx.lineWidth=1;
+function draw(){ctx.clearRect(0,0,w,h);ctx.lineWidth=1;labelBoxes.clear();
+ const panelRect=$('sequence-panel').getBoundingClientRect(),canvasRect=canvas.getBoundingClientRect();
+ const panelObstacle={x:panelRect.left-canvasRect.left,y:panelRect.top-canvasRect.top,width:panelRect.width,height:panelRect.height};
  // Stylised west coast and Mumbai's island chain, in nautical miles around VABB.
  path([[8,46],[7,35],[3,28],[5,23],[2,18],[4,13],[1,9],[-1,6],[-2,2],[-3,-2],[-5,-6],[-5,-12],[-3,-15],[-1,-10],[1,-8],[4,-9],[5,-13],[4,-19],[7,-24],[9,-31],[11,-44],[60,-44],[60,46]],'#274248','#12262b');
  path([[6,14],[8,9],[6,4],[9,-1],[7,-6],[10,-13],[12,-18],[11,-26]],'#243c42');
@@ -30,24 +33,61 @@ function draw(){ctx.clearRect(0,0,w,h);ctx.lineWidth=1;
  for(const radius of [10,20,30,40]){ctx.beginPath();ctx.arc(cx,cy,radius*scale,0,Math.PI*2);ctx.strokeStyle='#35505455';ctx.stroke();text(radius+' NM',cx+radius*scale+3,cy+12,'#3e5b60',8);}
  ctx.setLineDash([4,6]);ctx.beginPath();ctx.arc(cx,cy,43*scale,0,Math.PI*2);ctx.strokeStyle='#47645e';ctx.stroke();ctx.setLineDash([]);
  let p=screen({x:-24,y:4});text('A R A B I A N   S E A',p.x,p.y,'#37545e',10);p=screen({x:8,y:-7});text('MUMBAI',p.x,p.y,'#47656a',10);p=screen({x:21,y:-13});text('NAVI MUMBAI',p.x,p.y,'#365057',8);
+ // Convective weather: amber echo, red core and a 3 NM avoidance ring.
+ for(const cell of sim.storms){const p=screen(cell),radius=cell.radius*scale;
+  ctx.save();ctx.setLineDash([3,6]);ctx.strokeStyle='#d9ac6b55';ctx.beginPath();ctx.arc(p.x,p.y,(cell.radius+3)*scale,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  const gradient=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,radius);gradient.addColorStop(0,'#e16b5866');gradient.addColorStop(.5,'#cf855a55');gradient.addColorStop(1,'#d7b76922');ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e4ae7477';ctx.stroke();
+  for(const fraction of [.4,.7]){ctx.beginPath();ctx.ellipse(p.x,p.y,radius*fraction,radius*fraction*.84,-.3,0,Math.PI*2);ctx.strokeStyle=fraction===.4?'#df776b99':'#d6a86777';ctx.stroke();}
+  text(cell.id+' · CB',p.x-radius,p.y-radius-8,'#dfb080',9);text('3 NM BUFFER',p.x-radius,p.y+radius+14,'#ac9670',8);ctx.restore();
+ }
  // Westbound runway 27 and its extended localiser, east of the threshold.
  ctx.setLineDash([7,5]);path([[0,0],[28,0]],'#79a88b88');ctx.setLineDash([]);path([[0,0],[25,1.6]],'#74b59c22');path([[0,0],[25,-1.6]],'#74b59c22');
  for(const x of [5,10,15,20,25])path([[x,-.35],[x,.35]],'#668f7b');
  ctx.lineWidth=4;path([[-1.9,0],[0,0]],'#b2c4bf');ctx.lineWidth=2;path([[-1.2,-.8],[-.1,1.4]],'#5a7778');ctx.lineWidth=1;
  p=screen({x:-2,y:-2.4});text('VABB  /  RWY 27',p.x,p.y,'#a5b9b3',9);p=screen({x:15,y:-2.1});text('ILS 27 · 109.5',p.x,p.y,'#638b78',8);
  for(const f of ATC.fixes){if(f.name==='BOM')continue;const p=screen(f);ctx.beginPath();ctx.moveTo(p.x,p.y-4);ctx.lineTo(p.x+4,p.y+3);ctx.lineTo(p.x-4,p.y+3);ctx.closePath();ctx.strokeStyle='#577a7b';ctx.stroke();text(f.name,p.x+8,p.y+3,'#638184',8);}
- for(const a of sim.aircraft){let color=a.conflict?'#ff8d7e':a.transferred?colors.transferred:colors[a.kind];
+ for(const entry of finalSequence){if(entry.gap===null)continue;const lead=finalSequence[entry.position-2].aircraft,follow=entry.aircraft,color=entry.gap<3?'#ff9488':'#90bba3';ctx.setLineDash([2,4]);path([[lead.x,-.65],[follow.x,-.65]],color+'99');ctx.setLineDash([]);const p=screen({x:(lead.x+follow.x)/2,y:-.65});const label=entry.gap.toFixed(1)+' NM';ctx.fillStyle='#0c1b22e8';ctx.fillRect(p.x-27,p.y+3,54,14);text(label,p.x-23,p.y+13,color,8);}
+ for(const a of sim.aircraft){let color=a.conflict||a.weather==='CORE'?'#ff8d7e':a.transferred?colors.transferred:colors[a.kind];
  if(a===selected&&a.route.length){ctx.setLineDash([4,4]);path([[a.x,a.y],...a.route.map(p=>[p.x,p.y])],color+'99');ctx.setLineDash([]);for(const q of a.route){const p=screen(q);ctx.strokeStyle=color;ctx.strokeRect(p.x-3,p.y-3,6,6);}}
  a.trail.forEach((p,i)=>{if(i%8)return;const q=screen(p);ctx.fillStyle=color+'55';ctx.fillRect(q.x-1,q.y-1,2,2);});
  const p=screen(a);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(a.heading*Math.PI/180);ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(0,6);ctx.moveTo(-5,1);ctx.lineTo(0,-2);ctx.lineTo(5,1);ctx.moveTo(-2.5,5);ctx.lineTo(2.5,5);ctx.stroke();ctx.restore();ctx.lineWidth=1;
  if(a===selected){ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.strokeStyle=color+'99';ctx.stroke();}
- const dx=p.x>w-135?-112:16;ctx.strokeStyle=color+'66';ctx.beginPath();ctx.moveTo(p.x+Math.sign(dx)*7,p.y-5);ctx.lineTo(p.x+dx,p.y-17);ctx.stroke();text(a.call+' '+a.type,p.x+dx,p.y-20,color,10);text(String(Math.round(a.alt/100)).padStart(3,'0')+'  '+Math.round(a.speed)+'  '+(a.transferred?'TWR':a.established?a.clearance:a.clearance?'CLR '+a.clearance:a.kind==='arrival'?'↓':'↑'),p.x+dx,p.y-7,color,9);
+ const lines=ATC.aircraftLabel(a),entry=finalSequence.find(e=>e.aircraft===a);
+ if(entry)lines.push('FINAL '+entry.distance.toFixed(1)+' NM · TTD '+formatETA(entry.eta)+(entry.estimated?' ~':''));
+ if(a.weather)lines.push('WX '+(a.weather==='CORE'?'STORM CORE':'AVOIDANCE BUFFER'));
+ const width=192,height=lines.length*12+10;
+ let lx=Math.max(4,Math.min(w-width-4,p.x+(p.x>w-width-25?-width-15:17))),ly=Math.max(5,Math.min(h-height-5,p.y-30));
+ if(lx<panelObstacle.x+panelObstacle.width&&lx+width>panelObstacle.x&&ly<panelObstacle.y+panelObstacle.height&&ly+height>panelObstacle.y){if(panelObstacle.x-width-8>=4)lx=panelObstacle.x-width-8;else ly=panelObstacle.y+panelObstacle.height+8;}
+ // Keep adjacent final-approach data blocks readable.
+ for(let pass=0;pass<5;pass++){const collision=[...labelBoxes.values()].find(b=>lx<b.x+b.width&&lx+width>b.x&&ly<b.y+b.height&&ly+height>b.y);if(!collision)break;ly=collision.y+collision.height+5;if(ly+height>h-5)ly=Math.max(5,collision.y-height-5);}
+ const anchorX=lx>p.x?lx:lx+width;ctx.strokeStyle=color+'66';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(anchorX,ly+15);ctx.stroke();
+ ctx.fillStyle=a===selected?'#1a3039f2':'#0c1c24da';ctx.beginPath();ctx.roundRect(lx,ly,width,height,6);ctx.fill();if(a===selected){ctx.strokeStyle=color+'66';ctx.stroke();}
+ lines.forEach((line,i)=>text(line,lx+7,ly+13+i*12,i===0?color:i===lines.length-1&&a.weather?'#e6ad7b':'#aec3c6',i===0?10:9));
+ labelBoxes.set(a,{x:lx,y:ly,width,height});
  }
  if(plot){const coords=[[plot.x,plot.y],...points.map(p=>[p.x,p.y])];if(hover)coords.push([hover.x,hover.y]);ctx.setLineDash([5,4]);path(coords,'#f4e5b3');ctx.setLineDash([]);for(const q of points){const p=screen(q);ctx.strokeStyle='#f4e5b3';ctx.strokeRect(p.x-3,p.y-3,6,6);}}
 }
-function updateUI(){if(!sim)return;$('traffic-count').textContent=sim.aircraft.length;$('handled').textContent=sim.handled;$('clock').textContent=new Date(Date.UTC(2026,0,1,10,0,sim.time)).toISOString().slice(11,19)+' UTC';$('flight-list').replaceChildren();for(const a of sim.aircraft){const b=document.createElement('button');b.className='flight '+a.kind+(a===selected?' active':'')+(a.transferred?' transferred':'');b.innerHTML='<span>'+a.call+'<small>'+a.type+' · '+(a.transferred?'TOWER':a.established?a.clearance+' EST':a.kind.toUpperCase())+'</small></span><span>'+Math.round(a.alt).toLocaleString()+'<small>'+Math.round(a.speed)+' KT</small></span>';b.onclick=()=>{selected=a;updateUI();};b.oncontextmenu=e=>{e.preventDefault();openMenu(a,{x:20,y:100});};$('flight-list').append(b);}$('log').replaceChildren(...sim.events.slice(0,5).map(e=>{const d=document.createElement('div');d.textContent=e;return d;}));$('alert').hidden=!sim.conflicts.length;$('alert').textContent='⚠ SEPARATION · '+sim.conflicts.join(' · ');$('status').textContent=paused?'SIMULATION PAUSED':sim.conflicts.length?'Separation alert — issue corrective vectors or altitude.':plot?'Plotting '+plot.call+' · double click the last point to confirm.':'Maintain a safe, orderly flow.';}
+function formatETA(seconds){const n=Math.max(0,Math.round(seconds));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+function updateUI(){
+ if(!sim)return;
+ finalSequence=sim.sequence();
+ $('traffic-count').textContent=sim.aircraft.length;$('handled').textContent=sim.handled;
+ $('clock').textContent=new Date(Date.UTC(2026,0,1,10,0,sim.time)).toISOString().slice(11,19)+' UTC';
+ $('flight-list').replaceChildren();
+ for(const a of sim.aircraft){const b=document.createElement('button');b.className='flight '+a.kind+(a===selected?' active':'')+(a.transferred?' transferred':'');b.innerHTML='<span>'+a.call+'<small>'+a.type+' · '+(a.transferred?'TOWER':a.established?a.clearance+' EST':a.kind.toUpperCase())+'</small></span><span>'+Math.round(a.alt).toLocaleString()+'<small>'+Math.round(a.speed)+' KT</small></span>';b.onclick=()=>{selected=a;updateUI();};b.oncontextmenu=e=>{e.preventDefault();openMenu(a,{x:20,y:100});};$('flight-list').append(b);}
+ $('log').replaceChildren(...sim.events.slice(0,5).map(e=>{const d=document.createElement('div');d.textContent=e;return d;}));
+ $('sequence-count').textContent=finalSequence.length;
+ $('sequence-list').replaceChildren();
+ if(!finalSequence.length){const empty=document.createElement('p');empty.className='sequence-empty';empty.textContent='No aircraft established on final.';$('sequence-list').append(empty);}
+ for(const e of finalSequence){const b=document.createElement('button');b.className='sequence-row'+(e.gap!==null&&e.gap<3?' tight':'');b.innerHTML='<span class="sequence-flight">'+e.position+'. '+e.aircraft.call+'<small>'+e.distance.toFixed(1)+' NM to runway · '+(e.aircraft.transferred?'TOWER':e.aircraft.clearance+' EST')+'</small></span><span class="sequence-time">'+formatETA(e.eta)+(e.estimated?' ~':'')+'<small>'+(e.gap===null?'LEAD':e.gap.toFixed(1)+' NM GAP')+'</small></span>';b.onclick=()=>{selected=e.aircraft;updateUI();};$('sequence-list').append(b);}
+ $('weather-status').textContent=sim.storms.length+' CELLS · '+sim.weatherAlerts.length+' WX ALERT'+(sim.weatherAlerts.length===1?'':'S');
+ const alerts=[];if(sim.conflicts.length)alerts.push('SEPARATION · '+sim.conflicts.join(' · '));if(sim.weatherAlerts.length)alerts.push('WEATHER · '+sim.weatherAlerts.join(' · '));
+ $('alert').hidden=!alerts.length;$('alert').textContent=alerts.join(' / ');
+ $('status').textContent=paused?'SIMULATION PAUSED':sim.conflicts.length?'Separation alert — issue corrective vectors or altitude.':sim.weatherAlerts.length?'Weather proximity — vector aircraft clear of storm cells.':plot?'Plotting '+plot.call+' · double click the last point to confirm.':'Maintain a safe, orderly flow.';
+}
+
 function local(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
-function hit(p){return sim.aircraft.map(a=>({a,d:Math.hypot(screen(a).x-p.x,screen(a).y-p.y)})).filter(v=>v.d<20).sort((a,b)=>a.d-b.d)[0]?.a;}
+function hit(p){const symbol=sim.aircraft.map(a=>({a,d:Math.hypot(screen(a).x-p.x,screen(a).y-p.y)})).filter(v=>v.d<20).sort((a,b)=>a.d-b.d)[0]?.a;return symbol||[...labelBoxes].reverse().find(([a,b])=>sim.aircraft.includes(a)&&p.x>=b.x&&p.x<=b.x+b.width&&p.y>=b.y&&p.y<=b.y+b.height)?.[0];}
 function hideMenu(){$('menu').hidden=true;}function cancelPlot(){plot=null;points=[];$('route-hint').hidden=true;}
 function snap(p){const q=world(p),fix=ATC.fixes.find(f=>ATC.distance(q,f)*scale<13);return fix?{x:fix.x,y:fix.y,name:fix.name}:q;}
 canvas.addEventListener('pointerdown',e=>{
