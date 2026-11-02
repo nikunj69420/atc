@@ -148,3 +148,5 @@ function openMenu(a,p){const menu=$('menu');menu.replaceChildren();if(a.transfer
  if(a.kind==='arrival'){action((a.clearance==='LOC'?'✓ ':'')+'CLEAR LOCALISER · RWY 27',()=>sim.clear(a,'LOC'));action((a.clearance==='ILS'?'✓ ':'')+'CLEAR ILS APPROACH · RWY 27',()=>sim.clear(a,'ILS'));}}
  menu.hidden=false;menu.style.left=Math.max(8,Math.min(w-menu.offsetWidth-8,p.x+15))+'px';menu.style.top=Math.max(8,Math.min(h-menu.offsetHeight-8,p.y+10))+'px';}
 function frame(now){const elapsed=Math.min((now-last)/1000,.1);last=now;if(sim&&!$('game').hidden){if(!paused){let remaining=elapsed*rate;while(remaining>0){const dt=Math.min(remaining,.1);sim.step(dt);remaining-=dt;}if(selected&&!sim.aircraft.includes(selected)){if(plot===selected)cancelPlot();selected=null;hideMenu();}}draw();uiTimer+=elapsed;if(uiTimer>.4){updateUI();uiTimer=0;}}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+$('start').disabled=false;
+$('start').innerHTML='TAKE CONTROL <span>↗</span>';
