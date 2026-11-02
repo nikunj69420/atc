@@ -2,7 +2,7 @@
 
 A dependency-free HTML/canvas approach-control game centered on VABB Mumbai. Run `npm start`, then open port 3000 in your browser. Run simulation checks with `npm test`.
 
-The radar fills the screen; use Traffic to open the optional traffic panel. Left click and drag to pan the map (including while plotting a route). Scroll over the map to zoom around your cursor, use + / − for zoom steps, or click the percentage to reset the view.
+The radar starts at 125% zoom and includes 24 gameplay waypoints for entry, downwind and final-approach routing. The radar fills the screen; use Traffic to open the optional traffic panel. Left click and drag to pan the map (including while plotting a route). Scroll over the map to zoom around your cursor, use + / − for zoom steps, or click the percentage to reset the view.
 
 Choose easy, medium or hard traffic. Arrivals are yellow, departures blue, and aircraft transferred to tower green. Left click an aircraft, click fixes or arbitrary radar positions, and double click the last point to commit the route. Escape cancels. Right click an aircraft to assign altitude/speed using dropdowns or the mouse wheel; unrestricted restores its default profile. Click outside to dismiss controls.
 

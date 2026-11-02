@@ -1,6 +1,20 @@
 (function(root){
 'use strict';
-const fixes=[{name:'ALFA',x:-26,y:19},{name:'BOM',x:0,y:0},{name:'BETEL',x:26,y:23},{name:'GAMMA',x:34,y:3},{name:'DOLSI',x:24,y:-20},{name:'ELMON',x:-13,y:-29},{name:'FALCO',x:-33,y:-9},{name:'NORTH',x:4,y:33}];
+// Gameplay fixes, distributed across entry routes, downwind and final approach.
+const fixes=[
+ {name:'ALFA',x:-26,y:19},{name:'BOM',x:0,y:0},
+ {name:'BETEL',x:26,y:23},{name:'GAMMA',x:34,y:3},
+ {name:'DOLSI',x:24,y:-20},{name:'ELMON',x:-13,y:-29},
+ {name:'FALCO',x:-33,y:-9},{name:'NORTH',x:4,y:33},
+ {name:'ARION',x:-15,y:24},{name:'BAYEN',x:-29,y:5},
+ {name:'CORAL',x:-20,y:-13},{name:'DELTA',x:-5,y:17},
+ {name:'EMBER',x:9,y:22},{name:'FINCH',x:19,y:14},
+ {name:'GROVE',x:30,y:13},{name:'HAVEN',x:13,y:8},
+ {name:'IVORY',x:23,y:7},{name:'JASPER',x:26,y:-7},
+ {name:'KORAL',x:15,y:-8},{name:'LOTUS',x:5,y:-17},
+ {name:'MAPLE',x:-7,y:-13},{name:'NIMBUS',x:15,y:-26},
+ {name:'FINAL',x:8,y:0},{name:'INTER',x:18,y:0}
+];
 const fleet=[['IGO','A320',250,140],['AIC','A321',250,145],['AKJ','B738',250,145],['UAE','B77W',250,150],['ETD','B789',250,145],['QTR','A359',250,145],['AXB','B738',250,145],['SVA','B789',250,145]];
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const angleDiff=(a,b)=>((a-b+540)%360)-180;

@@ -1,6 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id),canvas=$('radar'),ctx=canvas.getContext('2d');
-let sim,level='easy',selected=null,plot=null,points=[],hover=null,paused=false,rate=1,last=0,w=0,h=0,scale=1,cx=0,cy=0,uiTimer=0,zoom=1,baseScale=1,panX=0,panY=0;
+const DEFAULT_ZOOM=1.25;
+let sim,level='easy',selected=null,plot=null,points=[],hover=null,paused=false,rate=1,last=0,w=0,h=0,scale=1,cx=0,cy=0,uiTimer=0,zoom=DEFAULT_ZOOM,baseScale=1,panX=0,panY=0;
 const colors={arrival:'#e9c76a',departure:'#6dbbef',transferred:'#74b59c'};
 let drag=null,suppressClick=false;
 function screen(p){return {x:cx+p.x*scale,y:cy-p.y*scale};}function world(p){return{x:(p.x-cx)/scale,y:(cy-p.y)/scale};}
@@ -9,11 +10,11 @@ function applyView(){scale=baseScale*zoom;cx=w*.47+panX;cy=h*.52+panY;$('zoom-re
 function zoomAt(factor,p={x:w/2,y:h/2}){const anchor=world(p);zoom=Math.max(.65,Math.min(5,zoom*factor));scale=baseScale*zoom;panX=p.x-anchor.x*scale-w*.47;panY=p.y+anchor.y*scale-h*.52;applyView();hideMenu();}
 $('zoom-in').onclick=()=>zoomAt(1.25);
 $('zoom-out').onclick=()=>zoomAt(1/1.25);
-$('zoom-reset').onclick=()=>{zoom=1;panX=panY=0;applyView();};
+$('zoom-reset').onclick=()=>{zoom=DEFAULT_ZOOM;panX=panY=0;applyView();};
 $('traffic-toggle').onclick=()=>{const panel=$('traffic-panel');panel.hidden=!panel.hidden;$('traffic-toggle').setAttribute('aria-expanded',String(!panel.hidden));};
 canvas.addEventListener('wheel',e=>{if(!sim||!$('guide').hidden)return;e.preventDefault();zoomAt(Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.002),local(e));},{passive:false});
 document.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{level=b.dataset.level;document.querySelector('.workloads .selected').classList.remove('selected');b.classList.add('selected');});
-$('start').onclick=()=>{sim=new ATC.Simulation(level);zoom=1;panX=panY=0;$('traffic-panel').hidden=true;$('traffic-toggle').setAttribute('aria-expanded','false');$('home').hidden=true;$('game').hidden=false;$('level-label').textContent=level.toUpperCase();paused=false;rate=1;selected=null;plot=null;points=[];$('pause').textContent='Ⅱ PAUSE';$('rate').textContent='1×';$('menu').hidden=true;resize();updateUI();};
+$('start').onclick=()=>{sim=new ATC.Simulation(level);zoom=DEFAULT_ZOOM;panX=panY=0;$('traffic-panel').hidden=true;$('traffic-toggle').setAttribute('aria-expanded','false');$('home').hidden=true;$('game').hidden=false;$('level-label').textContent=level.toUpperCase();paused=false;rate=1;selected=null;plot=null;points=[];$('pause').textContent='Ⅱ PAUSE';$('rate').textContent='1×';$('menu').hidden=true;resize();updateUI();};
 $('exit').onclick=e=>{e.preventDefault();$('game').hidden=true;$('home').hidden=false;sim=null;};
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';};
 $('rate').onclick=()=>{rate=rate===1?2:rate===2?4:1;$('rate').textContent=rate+'×';};
