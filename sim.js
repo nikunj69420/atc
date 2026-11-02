@@ -27,15 +27,11 @@ function touchdownSeconds(a){
  return seconds;
 }
 function aircraftLabel(a){
- const alt=n=>String(Math.round(n/100)).padStart(3,'0');
- const automatic=a.established&&a.clearance==='ILS';
- const bearing=a.route.length?(Math.atan2(a.route[0].x-a.x,a.route[0].y-a.y)*180/Math.PI+360)%360:a.heading;
- const heading=n=>String(Math.round(n)%360||360).padStart(3,'0');
- return [a.call+' / '+a.type,
-  'ALT '+alt(a.alt)+' → '+(automatic?'GS':a.targetAlt===null?'UNR':alt(a.targetAlt)),
-  'SPD '+Math.round(a.speed)+' → '+(automatic?approachSpeed(a):a.targetSpeed===null?'UNR':a.targetSpeed)+' KT',
-  'HDG '+heading(a.heading)+(a.route.length?' → '+(a.route[0].name||heading(bearing)):'')+' · '+(a.transferred?'TWR':a.established?a.clearance+' EST':a.clearance?a.clearance+' CLR':a.kind==='arrival'?'ARR':'DEP')];
+ const altitude=String(Math.round(a.alt/100)).padStart(3,'0');
+ const status=a.transferred?'TWR':a.established?a.clearance+' EST':a.clearance?'CLR '+a.clearance:a.kind==='arrival'?'↓':'↑';
+ return [a.call+' '+a.type,altitude+'  '+Math.round(a.speed)+'  '+status];
 }
+
 const stormTemplates=[{id:'CB01',x:-17,y:10,radius:4.2,vx:5,vy:1.5},{id:'CB02',x:22,y:-15,radius:4.8,vx:-3,vy:2},{id:'CB03',x:20,y:22,radius:3.8,vx:-4,vy:-2},{id:'CB04',x:-21,y:-20,radius:4.4,vx:3,vy:2}];
 class Simulation{
  constructor(level='easy',random=Math.random){this.random=random;this.level=level;this.aircraft=[];this.time=0;this.handled=0;this.serial=0;this.spawnTimer=0;this.events=[];this.conflicts=[];this.weatherAlerts=[];this.storms=stormTemplates.slice(0,{easy:2,medium:3,hard:4}[level]).map(s=>({...s}));const n={easy:4,medium:7,hard:10}[level];for(let i=0;i<n;i++)this.spawn(i);}

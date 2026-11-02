@@ -52,17 +52,15 @@ function draw(){ctx.clearRect(0,0,w,h);ctx.lineWidth=1;labelBoxes.clear();
  a.trail.forEach((p,i)=>{if(i%8)return;const q=screen(p);ctx.fillStyle=color+'55';ctx.fillRect(q.x-1,q.y-1,2,2);});
  const p=screen(a);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(a.heading*Math.PI/180);ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(0,6);ctx.moveTo(-5,1);ctx.lineTo(0,-2);ctx.lineTo(5,1);ctx.moveTo(-2.5,5);ctx.lineTo(2.5,5);ctx.stroke();ctx.restore();ctx.lineWidth=1;
  if(a===selected){ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.strokeStyle=color+'99';ctx.stroke();}
- const lines=ATC.aircraftLabel(a),entry=finalSequence.find(e=>e.aircraft===a);
- if(entry)lines.push('FINAL '+entry.distance.toFixed(1)+' NM · TTD '+formatETA(entry.eta)+(entry.estimated?' ~':''));
- if(a.weather)lines.push('WX '+(a.weather==='CORE'?'STORM CORE':'AVOIDANCE BUFFER'));
- const width=192,height=lines.length*12+10;
+ const lines=ATC.aircraftLabel(a);
+ const width=132,height=34;
  let lx=Math.max(4,Math.min(w-width-4,p.x+(p.x>w-width-25?-width-15:17))),ly=Math.max(5,Math.min(h-height-5,p.y-30));
  if(lx<panelObstacle.x+panelObstacle.width&&lx+width>panelObstacle.x&&ly<panelObstacle.y+panelObstacle.height&&ly+height>panelObstacle.y){if(panelObstacle.x-width-8>=4)lx=panelObstacle.x-width-8;else ly=panelObstacle.y+panelObstacle.height+8;}
  // Keep adjacent final-approach data blocks readable.
  for(let pass=0;pass<5;pass++){const collision=[...labelBoxes.values()].find(b=>lx<b.x+b.width&&lx+width>b.x&&ly<b.y+b.height&&ly+height>b.y);if(!collision)break;ly=collision.y+collision.height+5;if(ly+height>h-5)ly=Math.max(5,collision.y-height-5);}
  const anchorX=lx>p.x?lx:lx+width;ctx.strokeStyle=color+'66';ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(anchorX,ly+15);ctx.stroke();
- ctx.fillStyle=a===selected?'#1a3039f2':'#0c1c24da';ctx.beginPath();ctx.roundRect(lx,ly,width,height,6);ctx.fill();if(a===selected){ctx.strokeStyle=color+'66';ctx.stroke();}
- lines.forEach((line,i)=>text(line,lx+7,ly+13+i*12,i===0?color:i===lines.length-1&&a.weather?'#e6ad7b':'#aec3c6',i===0?10:9));
+ if(a===selected){ctx.fillStyle='#1a3039d9';ctx.beginPath();ctx.roundRect(lx,ly,width,height,6);ctx.fill();ctx.strokeStyle=color+'66';ctx.stroke();}
+ lines.forEach((line,i)=>text(line,lx+7,ly+13+i*12,color,i===0?10:9));
  labelBoxes.set(a,{x:lx,y:ly,width,height});
  }
  if(plot){const coords=[[plot.x,plot.y],...points.map(p=>[p.x,p.y])];if(hover)coords.push([hover.x,hover.y]);ctx.setLineDash([5,4]);path(coords,'#f4e5b3');ctx.setLineDash([]);for(const q of points){const p=screen(q);ctx.strokeStyle='#f4e5b3';ctx.strokeRect(p.x-3,p.y-3,6,6);}}
